@@ -27,6 +27,7 @@ Test environment:
 
 + ubuntu 16.04
 + c++ opencv 3.10
+
 ### let's phixel
 To get the code and test running:
 
