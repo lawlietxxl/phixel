@@ -20,8 +20,15 @@ installation on your computer. You can learn about installing opencv from [here]
 
 And I chose to use opencv with gcc and Cmake. You can learn about it from [here](http://docs.opencv.org/3.1.0/db/df5/tutorial_linux_gcc_cmake.html#gsc.tab=0).
 
+Test environment:
+
++ ubuntu 16.04
++ c++ opencv 3.10
 ### let's phixel
 To get the code and test running:
+
+NOTE: For the image file folder may be a little bit large, if it is a worry, just download the txt and cpp files. :)
+
 
 ```bash
 git clone ...
@@ -73,5 +80,4 @@ cd /the/project/path
 Please enjoy!
 
 
-NOTE: For the image file folder may be a little bit large, if it is a worry, just download the txt and cpp files. :)
 NOTE: The test file comes from the web and the candidates come from [ImageNet](http://www.image-net.org/).
