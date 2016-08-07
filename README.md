@@ -47,6 +47,8 @@ If you can see "The file has been saved to" somewhere after some outputs, congra
 Get into the phixel.cpp file, you can see 2 variables defined before the real code starts.
 
 ```c++
+>phixel.cpp
+
 #define PIXEL_LENGTH 20
 #define SINGLE_PIC_LENGTH 20
 ```
