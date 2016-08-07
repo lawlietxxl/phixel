@@ -12,7 +12,7 @@ phixel is a small snippet of c++ opencv code to help you create a pixelized pict
 
  ![gray mode](https://github.com/lawlietxxl/phixel/blob/master/test_pics/result_g.jpg)
 
- color mode:
+ color mode (may be a little green, cause my test pictures contains too many vegetables):
 
  ![color mode](https://github.com/lawlietxxl/phixel/blob/master/test_pics/result_c.jpg)
 
@@ -31,7 +31,7 @@ Test environment:
 ### let's phixel
 To get the code and test running:
 
-NOTE: For the image file folder may be a little bit large, if it is a worry, just download the txt and cpp files. :)
+**NOTE**: For the image file folder may be a little bit large, if it is a worry, just download the txt and cpp files. :)
 
 
 ```bash
@@ -60,7 +60,7 @@ Every single picture will take one pixel of the pixelized picture.
 
 ![intro](https://github.com/lawlietxxl/phixel/blob/master/test_pics/intro.png)
 
-NOTE: the code will cut the filling pictures into square.
+**NOTE**: the code will cut the filling pictures into square.
 
 Change the 2 variables as you like. But take care of the memory, cause if you change the **SINGLE_PIC_LENGTH** 
 to a very large number, the memory might be out of use.
@@ -87,7 +87,7 @@ cd /the/project/path
 Please enjoy!
 
 
-NOTE: The test file comes from the web and the candidates come from [ImageNet](http://www.image-net.org/).
+**NOTE**: The test file comes from the web and the candidates come from [ImageNet](http://www.image-net.org/).
 
 # LICENSE
 ```
