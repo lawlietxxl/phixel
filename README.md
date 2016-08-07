@@ -5,13 +5,16 @@ phixel is a small snippet of c++ opencv code to help you create a pixelized pict
  The running result is just like below:
 
  original picture:
- ![original picture]()
+
+ ![original picture](https://github.com/lawlietxxl/phixel/blob/master/test_pics/test.jpg)
 
  gray mode:
- ![gray mode]()
+
+ ![gray mode](https://github.com/lawlietxxl/phixel/blob/master/test_pics/result_g.jpg)
 
  color mode:
- ![color mode]()
+
+ ![color mode](https://github.com/lawlietxxl/phixel/blob/master/test_pics/result_c.jpg)
 
 ## easy to use
 ### prepare
@@ -31,7 +34,7 @@ NOTE: For the image file folder may be a little bit large, if it is a worry, jus
 
 
 ```bash
-git clone ...
+git clone https://github.com/lawlietxxl/phixel
 cd phixel
 cmake .
 make
@@ -51,7 +54,8 @@ Get into the phixel.cpp file, you can see 2 variables defined before the real co
 
 **SINGLE_PIC_LENGTH** means the single picture length when filling the pixelized picture.
 Every single picture will take one pixel of the pixelized picture.
-![]()
+
+![intro](https://github.com/lawlietxxl/phixel/blob/master/test_pics/intro.png)
 
 NOTE: the code will cut the filling pictures into square.
 
