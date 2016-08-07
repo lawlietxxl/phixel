@@ -41,7 +41,6 @@ Get into the phixel.cpp file, you can see 2 variables defined before the real co
 ```
 
 **PIXEL_LENGTH** means the length when pixelizing the picture like what the picture shows.
-![]()
 
 **SINGLE_PIC_LENGTH** means the single picture length when filling the pixelized picture.
 Every single picture will take one pixel of the pixelized picture.
@@ -72,3 +71,7 @@ cd /the/project/path
 + mode: just type in gray or color. Nothing more!
 
 Please enjoy!
+
+
+NOTE: For the image file folder may be a little bit large, if it is a worry, just download the txt and cpp files. :)
+NOTE: The test file comes from the web and the candidates come from [ImageNet](http://www.image-net.org/).
