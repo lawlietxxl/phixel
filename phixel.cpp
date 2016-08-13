@@ -13,9 +13,9 @@
 using namespace cv;
 using namespace std;
 
-#define PIXEL_LENGTH 20
+#define PIXEL_LENGTH 15
 #define SINGLE_PIC_LENGTH 120
-#define TOLERANCE 1
+#define TOLERANCE 8
 
 Mat pixelize(Mat img, int pixelRows, int pixelCols);
 Mat pixelizeGrayScale(Mat origin, int pixelRows, int pixelCols);
@@ -277,6 +277,8 @@ string pixelOnePicRGB(Mat mat){
     return itoRGB(R/area,G/area,B/area);
 };
 
+
+
 Mat findPic(uchar target, unordered_map<uchar, vector<Mat> >& mapU){
     //0 - 255
     //what about the 0 or 255
@@ -302,6 +304,8 @@ Mat findPic(uchar target, unordered_map<uchar, vector<Mat> >& mapU){
         ++diff;
         if(!flag) --tolerance;
     }
+
+
     int l = 0, r = result.size();
 
     vector<Mat> v =mapU[result[rand() % (r-l)]];
@@ -338,8 +342,9 @@ vector<string> findSurface(int arg0, int arg1, int arg2, int diff){
         points.push_back(""+arg0+arg1+arg2);
         return points;
     }
-    for(int i = 0; i < diff;++i)
-        for(int j = 0; i + j < diff; ++j){
+    //cout << "diff "<<diff<<endl;
+    for(int i = 0; i <= diff;++i)
+        for(int j = 0; i + j <= diff; ++j){
             int k = diff - i - j;
             //arg0 +- i, arg1 +- j, arg2 +- k
             vector<string> arg0V;
@@ -363,7 +368,18 @@ vector<string> findSurface(int arg0, int arg1, int arg2, int diff){
                         points.push_back(arg0V[ti]+arg1V[tj]+arg2V[tk]);
                     }
         }
+    //cout << "done"<<endl;
     return points;
+}
+
+
+Mat makeAMat(string target){
+    int R = atoi(target.substr(0,3).c_str());
+    int G = atoi(target.substr(3,3).c_str());
+    int B = atoi(target.substr(6,3).c_str());
+    Mat m(SINGLE_PIC_LENGTH, SINGLE_PIC_LENGTH, CV_8UC3, Scalar(R, G, B));
+    
+    return m;
 }
 
 Mat findPic(string target, unordered_map<string, vector<Mat> >& mapS){
@@ -375,21 +391,25 @@ Mat findPic(string target, unordered_map<string, vector<Mat> >& mapS){
     int B = atoi(target.substr(6,3).c_str());
     //cout << R <<G<<B<<endl;
     vector<string> candi;
-    while(tolerance > 0){
+    while(tolerance > 0 && diff < 200){
+        //cout << "step 1" <<endl;
+        //cout << "diff "<<diff <<endl;
         vector<string> points = findSurface(R, G, B, diff);
-        candi.clear();
-        bool flag = false;
+        //cout << "step 2" <<endl;
         for(int i = 0; i < points.size(); ++i){
             unordered_map<string, vector<Mat> >::iterator it = mapS.find(points[i]);
             if(it != mapS.end()){
                 candi.push_back(points[i]);
-                flag = true;
                 --tolerance;
             }
         }
         ++diff;
     }
     //cout <<"find a pic" <<endl;
+    //cout << "step 3" <<endl;
+    if(candi.size() == 0)
+        return makeAMat(target);
+
     int l = 0, r = candi.size();
     vector<Mat> v = mapS[candi[rand() % (r-l)]];
     return v[rand()%v.size()];
@@ -404,8 +424,10 @@ Mat assenble(Mat pixelMat, unordered_map<string, vector<Mat> >& mapS){
         cout << "ROW: "<<pr<<" " << flush;
         uchar* prPtr = pixelMat.ptr<uchar>(pr);
         for(int pc = 0; pc < pixelMat.cols; ++pc){
-            cout << pc <<" " <<flush;
+            cout <<pc<<" " <<flush;
             string rgb = itoRGB(prPtr[pc*3], prPtr[pc*3 + 1], prPtr[pc*3 + 1]);
+
+            //find pic is slow for color mode
             Mat fill = findPic(rgb, mapS);
             //fill[i][j + x] result[pr*SINGLE_PIC_LENGTH][pc*SINGLE_PIC_LENGTH*3 +j*3 + x]
             for(int i = 0; i < SINGLE_PIC_LENGTH; ++i){
