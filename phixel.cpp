@@ -13,8 +13,9 @@
 using namespace cv;
 using namespace std;
 
-#define PIXEL_LENGTH 10
-#define SINGLE_PIC_LENGTH 50
+#define PIXEL_LENGTH 30
+#define SINGLE_PIC_LENGTH 10
+#define TOLERANCE 5
 
 Mat pixelize(Mat img, int pixelRows, int pixelCols);
 Mat pixelizeGrayScale(Mat origin, int pixelRows, int pixelCols);
@@ -278,28 +279,33 @@ Mat findPic(uchar target, map<uchar, vector<Mat> > mapU){
     //0 - 255
     //what about the 0 or 255
     int diff = 0;
+    int tolerance = TOLERANCE;
     bool flag = true;
-    vector<Mat> result;
-    while(flag){
+    vector<uchar> result;
+    while(flag || tolerance > 0){
+        if(!flag) 
+            if(tolerance-- == 0)
+                break;
         if(target-diff >= 0){
             map<uchar, vector<Mat> >::iterator it = mapU.find(target-diff);
             if(it != mapU.end()){
                 flag = false;
-                result.insert(result.end(), it->second.begin(), it->second.end());
+                result.push_back(it->first);
             }
         }
         if(target+diff <= 255){
             map<uchar, vector<Mat> >::iterator it = mapU.find(target+diff);
             if(it != mapU.end()){
                 flag = false;
-                result.insert(result.end(), it->second.begin(), it->second.end());
+                result.push_back(it->first);
             }
         }
         ++diff;
     }
     int l = 0, r = result.size();
 
-    return result[rand() % (r-l)];
+    vector<Mat> v =mapU[result[rand() % (r-l)]];
+    return v[rand()%v.size()];
 };
 
 
@@ -363,6 +369,7 @@ vector<string> findSurface(int arg0, int arg1, int arg2, int diff){
 Mat findPic(string target, map<string, vector<Mat> > mapS){
     //3d cube
     int diff = 0;
+    int tolerance = TOLERANCE;
     int R = atoi(target.substr(0,3).c_str());
     int G = atoi(target.substr(3,3).c_str());
     int B = atoi(target.substr(6,3).c_str());
@@ -379,7 +386,9 @@ Mat findPic(string target, map<string, vector<Mat> > mapS){
                 flag = true;
             }
         }
-        if(flag) break;
+        if(flag) 
+            if(tolerance-- > 0)
+                break;
         ++diff;
     }
     //cout <<"find a pic" <<endl;
@@ -397,6 +406,7 @@ Mat assenble(Mat pixelMat, map<string, vector<Mat> > mapS){
         cout << "ROW: "<<pr<<" " << flush;
         uchar* prPtr = pixelMat.ptr<uchar>(pr);
         for(int pc = 0; pc < pixelMat.cols; ++pc){
+
             string rgb = itoRGB(prPtr[pc*3], prPtr[pc*3 + 1], prPtr[pc*3 + 1]);
             Mat fill = findPic(rgb, mapS);
             //fill[i][j + x] result[pr*SINGLE_PIC_LENGTH][pc*SINGLE_PIC_LENGTH*3 +j*3 + x]
