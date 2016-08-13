@@ -13,29 +13,64 @@
 using namespace cv;
 using namespace std;
 
-#define PIXEL_LENGTH 20
-#define SINGLE_PIC_LENGTH 20
+#define PIXEL_LENGTH 10
+#define SINGLE_PIC_LENGTH 50
 
 Mat pixelize(Mat img, int pixelRows, int pixelCols);
 Mat pixelizeGrayScale(Mat origin, int pixelRows, int pixelCols);
 Mat pixelizeRGB(Mat origin, int pixelRows, int pixelCols);
-map<uchar, Mat> mapFilesGrayScale(string folderPath);
-map<string, Mat> mapFilesRGB(string folderPath);
+Mat cutToSquare(Mat mat);
+void mapFilesGrayScale(string folderPath, map<uchar, vector<Mat> >& result);
+void mapFilesRGB(string folderPath, map<string, vector<Mat> >& mapS);
 
 uchar pixelOnePicGrayScale(Mat mat);
 string pixelOnePicRGB(Mat mat);
 
-Mat assenble(Mat pixelMat, map<uchar, Mat> mapU, int smallImageLength);
-Mat assenble(Mat pixelMat, map<string, Mat> mapS, int smallImageLength);
+Mat assenble(Mat pixelMat, map<uchar, vector<Mat> > mapU);
+Mat assenble(Mat pixelMat, map<string, vector<Mat> > mapS);
 
 int main( int argc, char** argv )
 {   
     srand((unsigned)time(NULL));
     string imageName("./test_pics/test.jpg"); // by default
     string folderPath("./test_pics/candidates");
-    string writePath("./test_pics/result_c.jpg");
+    string writePath("./test_pics/result_g.jpg");
     string mode("gray");
     //mode = gray/color
+    if(argc == 1){
+        cout << "testing gray mode ..." <<endl;
+        Mat img = imread(imageName.c_str(), IMREAD_GRAYSCALE);
+        if( img.empty()){
+            cout <<  "Could not open or find the image" << std::endl ;
+            return -1;
+        }
+        Mat pix = pixelize(img, PIXEL_LENGTH, PIXEL_LENGTH);
+        cout <<"After pixelization [colums * rows]: " << pix.size() <<endl;
+        map<uchar, vector<Mat> > mapU;
+        mapFilesGrayScale(folderPath, mapU);
+        Mat result = assenble(pix, mapU);
+        imwrite(writePath, result);
+        cout << "The gray mode file has been saved to " << writePath <<endl;
+        
+
+        string writePath = "./test_pics/result_c.jpg";
+        cout << "testing color mode ..." <<endl;
+        img = imread(imageName.c_str(), IMREAD_COLOR);
+        if( img.empty()){
+            cout <<  "Could not open or find the image" << std::endl ;
+            return -1;
+        }
+        pix = pixelize(img, PIXEL_LENGTH, PIXEL_LENGTH);
+        cout <<"After pixelization [colums * rows]: " << pix.size() <<endl;
+        map<string, vector<Mat> > mapS;
+        mapFilesRGB(folderPath, mapS);
+        result = assenble(pix, mapS);
+        imwrite(writePath, result);
+        cout << "The color mode file has been saved to " << writePath <<endl;
+        
+        return 1;
+    }
+
     if( argc >= 4)
     {
         imageName = argv[1];
@@ -61,8 +96,9 @@ int main( int argc, char** argv )
         }
         Mat pix = pixelize(img, PIXEL_LENGTH, PIXEL_LENGTH);
         cout <<"After pixelization [colums * rows]: " << pix.size() <<endl;
-        map<uchar, Mat> mapU = mapFilesGrayScale(folderPath);
-        Mat result = assenble(pix, mapU, SINGLE_PIC_LENGTH);
+        map<uchar, vector<Mat> > mapU;
+        mapFilesGrayScale(folderPath, mapU);
+        Mat result = assenble(pix, mapU);
         imwrite(writePath, result);
     }else{
         Mat img = imread(imageName.c_str(), IMREAD_COLOR);
@@ -72,8 +108,9 @@ int main( int argc, char** argv )
         }
         Mat pix = pixelize(img, PIXEL_LENGTH, PIXEL_LENGTH);
         cout <<"After pixelization [colums * rows]: " << pix.size() <<endl;
-        map<string, Mat> mapS = mapFilesRGB(folderPath);
-        Mat result = assenble(pix, mapS, SINGLE_PIC_LENGTH);
+        map<string, vector<Mat> > mapS;
+        mapFilesRGB(folderPath, mapS);
+        Mat result = assenble(pix, mapS);
         imwrite(writePath, result);
     }
     cout << "The file has been saved to " << writePath <<endl;
@@ -155,26 +192,27 @@ Mat pixelizeRGB(Mat origin, int pixelRows, int pixelCols){
     return result;
 }
 
-map<uchar, Mat> mapFilesGrayScale(string folderPath){
+void mapFilesGrayScale(string folderPath, map<uchar, vector<Mat> >& result){
     vector<String> filenames;
     glob(folderPath, filenames);
-    map<uchar, Mat> result;
     for(size_t i = 0; i < filenames.size(); ++i){
         Mat m = imread(filenames[i], IMREAD_GRAYSCALE);
-        result[pixelOnePicGrayScale(m)] = m;
+        m = cutToSquare(m);
+        resize(m, m, Size(SINGLE_PIC_LENGTH, SINGLE_PIC_LENGTH));
+        result[pixelOnePicGrayScale(m)].push_back(m);
     }
-    return result;
 }
 
-map<string, Mat> mapFilesRGB(string folderPath){
+void mapFilesRGB(string folderPath, map<string, vector<Mat> >& result){
     vector<String> filenames;
     glob(folderPath, filenames);
-    map<string, Mat> result;
     for(size_t i = 0; i < filenames.size(); ++i){
+        //cout << filenames[i] <<endl;
         Mat m = imread(filenames[i], IMREAD_COLOR);
-        result[pixelOnePicRGB(m)] = m;
+        m = cutToSquare(m);
+        resize(m, m, Size(SINGLE_PIC_LENGTH, SINGLE_PIC_LENGTH));
+        result[pixelOnePicRGB(m)].push_back(m);
     }
-    return result;
 };
 
 Mat cutToSquare(Mat mat){
@@ -193,11 +231,10 @@ Mat cutToSquare(Mat mat){
 };
 
 uchar pixelOnePicGrayScale(Mat mat){
-    Mat square = cutToSquare(mat);
     int length = mat.rows;
     long sumUp = 0;
     for(int row = 0; row < length; ++row){
-        uchar* p = square.ptr<uchar>(row);
+        uchar* p = mat.ptr<uchar>(row);
         for(int col = 0; col < length; ++col)
             sumUp += (long)p[col];
     }
@@ -222,13 +259,12 @@ string itoRGB(long r, long g, long b){
 }
 
 string pixelOnePicRGB(Mat mat){
-    Mat square = cutToSquare(mat);
     //cout << "square successfuly" <<endl;
-    int length = square.rows;
+    int length = mat.rows;
     long R = 0, G = 0, B = 0;
     unsigned long area = length * length;
     for(int row = 0; row < length; ++row){
-        uchar* p = square.ptr<uchar>(row);
+        uchar* p = mat.ptr<uchar>(row);
         for(int col = 0; col < length; ++col){
             R += (long)p[col*3];
             G += (long)p[col*3 + 1];
@@ -238,42 +274,50 @@ string pixelOnePicRGB(Mat mat){
     return itoRGB(R/area,G/area,B/area);
 };
 
-Mat findPic(uchar target, map<uchar, Mat> mapU){
+Mat findPic(uchar target, map<uchar, vector<Mat> > mapU){
     //0 - 255
     //what about the 0 or 255
     int diff = 0;
-    while(true){
+    bool flag = true;
+    vector<Mat> result;
+    while(flag){
         if(target-diff >= 0){
-            map<uchar, Mat>::iterator it = mapU.find(target-diff);
-            if(it != mapU.end())
-                return it->second;
+            map<uchar, vector<Mat> >::iterator it = mapU.find(target-diff);
+            if(it != mapU.end()){
+                flag = false;
+                result.insert(result.end(), it->second.begin(), it->second.end());
+            }
         }
         if(target+diff <= 255){
-            map<uchar, Mat>::iterator it = mapU.find(target+diff);
-            if(it != mapU.end())
-                return it->second;
+            map<uchar, vector<Mat> >::iterator it = mapU.find(target+diff);
+            if(it != mapU.end()){
+                flag = false;
+                result.insert(result.end(), it->second.begin(), it->second.end());
+            }
         }
         ++diff;
     }
+    int l = 0, r = result.size();
+
+    return result[rand() % (r-l)];
 };
 
 
-Mat assenble(Mat pixelMat, map<uchar, Mat> mapU, int smallImageLength){
+Mat assenble(Mat pixelMat, map<uchar, vector<Mat> > mapU){
     int pRows = pixelMat.rows;
     int pCols = pixelMat.cols;
-    Mat mat(pRows*smallImageLength, pCols*smallImageLength, CV_8UC1);
+    Mat mat(pRows*SINGLE_PIC_LENGTH, pCols*SINGLE_PIC_LENGTH, CV_8UC1);
     for(int pr = 0; pr < pRows; ++pr){
         uchar* prPtr = pixelMat.ptr<uchar>(pr);
         cout << "ROW: "<<pr<<" ";
         for(int pc = 0; pc < pCols; ++pc){
             Mat fill = findPic(prPtr[pc], mapU);
-            resize(fill, fill, Size(smallImageLength, smallImageLength));
-            for(int r = 0; r < smallImageLength; ++r){
-                //pr * smallImageLength, pc*smallImageLength
-                uchar* rPtr = mat.ptr<uchar>(pr*smallImageLength + r);
+            for(int r = 0; r < SINGLE_PIC_LENGTH; ++r){
+                //pr * SINGLE_PIC_LENGTH, pc*SINGLE_PIC_LENGTH
+                uchar* rPtr = mat.ptr<uchar>(pr*SINGLE_PIC_LENGTH + r);
                 uchar* fillPtr = fill.ptr<uchar>(r);
-                for(int c = 0; c < smallImageLength; ++c)
-                    rPtr[pc*smallImageLength + c] = fillPtr[c];
+                for(int c = 0; c < SINGLE_PIC_LENGTH; ++c)
+                    rPtr[pc*SINGLE_PIC_LENGTH + c] = fillPtr[c];
             }
         }
     }
@@ -316,7 +360,7 @@ vector<string> findSurface(int arg0, int arg1, int arg2, int diff){
     return points;
 }
 
-Mat findPic(string target, map<string, Mat> mapS){
+Mat findPic(string target, map<string, vector<Mat> > mapS){
     //3d cube
     int diff = 0;
     int R = atoi(target.substr(0,3).c_str());
@@ -329,7 +373,7 @@ Mat findPic(string target, map<string, Mat> mapS){
         candi.clear();
         bool flag = false;
         for(int i = 0; i < points.size(); ++i){
-            map<string, Mat>::iterator it = mapS.find(points[i]);
+            map<string, vector<Mat> >::iterator it = mapS.find(points[i]);
             if(it != mapS.end()){
                 candi.push_back(points[i]);
                 flag = true;
@@ -340,14 +384,14 @@ Mat findPic(string target, map<string, Mat> mapS){
     }
     //cout <<"find a pic" <<endl;
     int l = 0, r = candi.size();
-
-    return mapS[candi[rand() % (r-l)]];
+    vector<Mat> v = mapS[candi[rand() % (r-l)]];
+    return v[rand()%v.size()];
     //return mapS[candi[candi.size()/2]];
 };
 
-Mat assenble(Mat pixelMat, map<string, Mat> mapS, int smallImageLength){
-    int ROWS = pixelMat.rows * smallImageLength;
-    int COLS = pixelMat.cols * smallImageLength;
+Mat assenble(Mat pixelMat, map<string, vector<Mat> > mapS){
+    int ROWS = pixelMat.rows * SINGLE_PIC_LENGTH;
+    int COLS = pixelMat.cols * SINGLE_PIC_LENGTH;
     Mat result(ROWS, COLS, CV_8UC3);
     for(int pr = 0; pr < pixelMat.rows; ++pr){
         cout << "ROW: "<<pr<<" " << flush;
@@ -355,14 +399,13 @@ Mat assenble(Mat pixelMat, map<string, Mat> mapS, int smallImageLength){
         for(int pc = 0; pc < pixelMat.cols; ++pc){
             string rgb = itoRGB(prPtr[pc*3], prPtr[pc*3 + 1], prPtr[pc*3 + 1]);
             Mat fill = findPic(rgb, mapS);
-            resize(fill, fill, Size(smallImageLength, smallImageLength));
-            //fill[i][j + x] result[pr*smallImageLength][pc*smallImageLength*3 +j*3 + x]
-            for(int i = 0; i < smallImageLength; ++i){
+            //fill[i][j + x] result[pr*SINGLE_PIC_LENGTH][pc*SINGLE_PIC_LENGTH*3 +j*3 + x]
+            for(int i = 0; i < SINGLE_PIC_LENGTH; ++i){
                 uchar* fillPtr = fill.ptr<uchar>(i);
-                uchar* resultPtr = result.ptr<uchar>(pr*smallImageLength + i);
-                for(int j = 0; j < smallImageLength; ++j)
+                uchar* resultPtr = result.ptr<uchar>(pr*SINGLE_PIC_LENGTH + i);
+                for(int j = 0; j < SINGLE_PIC_LENGTH; ++j)
                     for(int k = 0; k < 3; ++k)
-                        resultPtr[pc*smallImageLength*3 + j*3 +k] = fillPtr[j*3 + k];
+                        resultPtr[pc*SINGLE_PIC_LENGTH*3 + j*3 +k] = fillPtr[j*3 + k];
             }
         }
     }
